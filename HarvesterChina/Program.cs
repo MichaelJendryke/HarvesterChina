@@ -41,7 +41,7 @@ namespace HarvesterChina
 
 
                 //Get hexagons
-                Chexagons<int, int, int, int, double, double, double> Chexagons = WeiboMySQL.GetHexagonsFromMSSQL(h);
+                Chexagons<int, int, int, int, double, double, double> Chexagons = SQLServer.GetHexagonsFromSQL(h);
                 int CountHexagons = Chexagons.Count();
 
                 ////Output on console
@@ -57,10 +57,10 @@ namespace HarvesterChina
                 //                      Chexagons[i].Item7
                 //                      );
                 //}
-                Console.WriteLine("Number of hexagons: " + CountHexagons.ToString());
+                Console.WriteLine(CountHexagons.ToString() + " \tHexagons");
 
                 //mark hexagons as taken
-                WeiboMySQL.MarkHexagonsFromMSSQL(Chexagons);
+                SQLServer.SetHexagonsAsTakenSQL(Chexagons);
 
                 //Make probability array
                 List<int> probability = new List<int>();
@@ -76,20 +76,21 @@ namespace HarvesterChina
                     }
 
                 }
-                Console.Write(probability.Count().ToString() + " 'fields' in probability array \n");
+                Console.Write(probability.Count().ToString() + " \t'fields' in probability array \n");
 
 
 
                 //Get Harvester AppKeys
-                AppKeysAndSecrets<int, string, string, string, string> AppKeysAndSecretsList = WeiboMySQL.GetHarvestersFromDB();
+                AppKeysAndSecrets<int, string, string, string, string> AppKeysAndSecretsList = SQLServer.GetAppKeysFromSQL();
 
                 //Number of Harvesters is the number of AppKeys
                 int numHarvesters = AppKeysAndSecretsList.Count();
-
+                Console.Write(numHarvesters.ToString() + " \tAppKeys \n");
+                SQLServer.SetAppKeysAsTakenSQL(AppKeysAndSecretsList);
                 //Set Harvesters as active
                 for (int i = 0; i < numHarvesters; i++)
                 {
-                    WeiboMySQL.SetAppKeysAndSecrestStatus((int)AppKeysAndSecretsList[i].Item1, "active", 0000);
+                    
                     Console.WriteLine(AppKeysAndSecretsList[i].Item1 + "\t" +
                                       AppKeysAndSecretsList[i].Item2 + "\t" +
                                       AppKeysAndSecretsList[i].Item3 + "\t" +
@@ -319,12 +320,17 @@ namespace HarvesterChina
 
 
                             //Parameteriszed MySQL Insert Ignore Season ID for all of China is 8 and fieldgroup ID is also 8
-                            var good = NearPubTimelineToSQL(dNTL,
+                            //var good = NearPubTimelineToSQL(dNTL,
+                            //                      "8",
+                            //                      Chexagons[Chidx].Item1.ToString(),
+                            //                      8);
+                            Console.Write("ready to write");
+                            var good = SQLServer.NearbyTimelineToSQL(dNTL,
                                                   "8",
                                                   Chexagons[Chidx].Item1.ToString(),
                                                   8);
 
-
+Console.Write("written");
 
                             int collected = good.Item2;
                             int inserted = good.Item3;
@@ -377,28 +383,7 @@ namespace HarvesterChina
                             WeiboMySQL.UpdateSingleHexagonFromMSSQL(RandomID, TimesHarvested, TotalCollected, TotalInserted, ratio);
                             //Console.WriteLine(Chexagons[Chidx].Item1.ToString() + " " + Chexagons[Chidx].Item2.ToString() + " " + Chexagons[Chidx].Item3.ToString() + " " + Chexagons[Chidx].Item4.ToString() + " " + Chexagons[Chidx].Item5.ToString() + " " + Chexagons[Chidx].Item6.ToString() + " " + Chexagons[Chidx].Item7.ToString());
 
-
-                            //Console.Write(good.Item1);
-                            //Console.Write(good.Item2);
-
-                            //try
-                            //{
-                            //    good = NearPubTimelineToTimoServer(dNTL,
-                            //                          SeasonID,
-                            //                          FieldsGroup[randomLatLongCoordinates].Item1,
-                            //                          FieldGroupID);
-
-                            //}
-                            //catch (Exception ex)
-                            //{
-                            //}
-
-                            //if (good.Item1 == 1)
-                            //{
-                            //    //Console.Write(" Cannot reach Timo's server");
-                            //    //continue;
-                            //}
-
+                            
 
                             //.Net4.0
 #else
@@ -1302,6 +1287,408 @@ namespace HarvesterChina
 
     }
 
+    class SQLServer {
+        static public Chexagons<int, int, int, int, double, double, double> GetHexagonsFromSQL(int p)
+        {
+
+            //LIST
+            var HexagonList = new Chexagons<int, int, int, int, double, double, double> { };
+
+            //CONNECT
+            SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
+            try
+            {
+                myConnection.Open();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+            //READ
+            try
+            {
+                SqlDataReader myReader = null;
+                SqlCommand myCommand = new SqlCommand("select top " + p.ToString() + " [RandomID],[TimesHarvested],[TotalCollected],[TotalInserted],[LAT],[LON],[ratio] from [weibo].[dbo].[HEXAGONPOINTS] Where [taken]=0 AND [MainlandChina]=1 ORDER BY NEWID();",
+                                                         myConnection);
+                myReader = myCommand.ExecuteReader();
+                while (myReader.Read())
+                {
+                    //Console.Write(myReader["RandomID"].ToString() + "\t");
+                    //Console.Write(myReader["TimesHarvested"].ToString() + "\t");
+                    //Console.Write(myReader["TotalCollected"].ToString() + "\t");
+                    //Console.Write(myReader["TotalInserted"].ToString() + "\t");
+                    //Console.Write(myReader["LAT"].ToString() + "\t");
+                    //Console.Write(myReader["LON"].ToString() + "\t");
+                    //Console.Write(myReader["ratio"].ToString() + "\n");
+
+                    HexagonList.Add(Convert.ToInt32(myReader["RandomID"]),          //Item1
+                                    Convert.ToInt32(myReader["TimesHarvested"]),    //Item2
+                                    Convert.ToInt32(myReader["TotalCollected"]),    //Item3
+                                    Convert.ToInt32(myReader["TotalInserted"]),     //Item4
+                                    Convert.ToDouble(myReader["LAT"]),              //Item5
+                                    Convert.ToDouble(myReader["LON"]),              //Item6
+                                    Convert.ToDouble(myReader["ratio"]));           //Item7
+                }
+                myReader.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            
+            myConnection.Close();
+            return HexagonList;
+        }
+
+        static public void SetHexagonsAsTakenSQL(Chexagons<int, int, int, int, double, double, double> L)
+        {
+
+
+            //CONNECT
+            SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
+            try
+            {
+                myConnection.Open();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+            //UPDATE
+            try
+            {
+
+                string s = "update [weibo].[dbo].[HEXAGONPOINTS] set [taken]=1 WHERE [RandomID]IN(";
+                for (int i = 0; i < L.Count(); i++)
+                {
+                    s = s + L[i].Item1.ToString() + ", ";
+                }
+                s = s.Substring(0, s.Length - 2);
+                s = s + ");";
+
+                //Console.WriteLine(s);
+                SqlCommand myCommand = new SqlCommand(s, myConnection);
+                myCommand.ExecuteReader();
+
+
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            myConnection.Close();
+
+        }
+
+        static public AppKeysAndSecrets<int, string, string, string, string> GetAppKeysFromSQL()
+        {
+            //LIST
+            var HarvesterList = new AppKeysAndSecrets<int, string, string, string, string> { };
+            
+            //CONNECT
+            SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
+            try
+            {
+                myConnection.Open();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+
+            try
+            {
+                //SQL Query
+                SqlDataReader myReader = null;
+                SqlCommand myCommand = new SqlCommand("select top 10 [Harvester_ID],[Harvester_AppKey],[Harvester_AppSecret],[Harvester_WeiboLogin],[Harvester_WeiboPassword] from [weibo].[dbo].[APPKEYS] Where [Harvester_Status]='inactive' ORDER BY NEWID();",
+                                                         myConnection);
+                myReader = myCommand.ExecuteReader();
+                //READ the data and store them in the list
+                while (myReader.Read())
+                {
+                    HarvesterList.Add((int)myReader["Harvester_ID"],
+                                   (string)myReader["Harvester_AppKey"],
+                                   (string)myReader["Harvester_AppSecret"],
+                                   (string)myReader["Harvester_WeiboLogin"],
+                                   (string)myReader["Harvester_WeiboPassword"]);
+
+                }//close Data Reader
+                myReader.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+            myConnection.Close();
+            return HarvesterList;
+
+        }
+
+        static public void SetAppKeysAsTakenSQL(AppKeysAndSecrets<int, string, string, string, string> A)
+        {
+            //CONNECT
+            SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
+            try
+            {
+                myConnection.Open();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+
+
+            //UPDATE
+            try
+            {
+
+                string s = "update [weibo].[dbo].[APPKEYS] set [Harvester_Status]='active' WHERE [Harvester_ID]IN(";
+                for (int i = 0; i < A.Count(); i++)
+                {
+                    s = s + A[i].Item1.ToString() + ", ";
+                }
+                s = s.Substring(0, s.Length - 2);
+                s = s + ");";
+
+                //Console.WriteLine(s);
+                SqlCommand myCommand = new SqlCommand(s, myConnection);
+                myCommand.ExecuteReader();
+
+
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+            myConnection.Close();
+
+        }
+
+        static public Tuple<int, int, int> NearbyTimelineToSQL(dynamic s, string sid, string fid, int fgid)
+        {
+
+            int answer = 0;
+            int wentin = 0;
+            int c = 0;
+
+            //CONNECT
+            int written = 0;
+            using (var conn = new SqlConnection(Properties.Settings.Default.MSSQL))
+            {
+                conn.Open();
+
+
+                const string insertCommand = "INSERT INTO dbo.Harvest_Backup(" +
+                                             "SeasonID," +
+                                             "FieldID," +
+                                             "FieldGroupID," +
+                                             "createdAT," +
+                                             "msgID," +
+                                             "msgmid," +
+                                             "geoTYPE," +
+                                             "geoLAT," +
+                                             "geoLOG," +
+                                             "userID," +
+                                             "distance," +
+                                  //InnoDB// "Point," +
+                                             "msgidstr," +
+                                             "msgtext," +
+                                             "msgin_reply_to_status_id," +
+                                             "msgin_reply_to_user_id," +
+                                             "msgin_reply_to_screen_name," +
+                                             "msgfavorited," +
+                                             "userscreen_name," +
+                                             "userprovince," +
+                                             "usercity," +
+                                             "userlocation," +
+                                             "userfollowers_count," +
+                                             "userfriends_count," +
+                                             "userstatuses_count," +
+                                             "userfavourites_count," +
+                                             "usercreated_at," +
+                                             "usergeo_enabled," +
+                                             "userverified," +
+                                             "userbi_followers_count," +
+                                             "userlang," +
+                                             "userclient_mblogid" +
+                    //"userdescription" +
+                                             ")" +
+
+                                             "SELECT " +
+                                             "@SID," +
+                                             "@FID," +
+                                             "@FGID," +
+                                             "@createdAT," +
+                                             "@msgid," +
+                                             "@msgmid," +
+                                             "@geoTYPE," +
+                                             "@geoLAT," +
+                                             "@geoLOG," +
+                                             "@userID," +
+                                             "@distance," +
+                    //InnoDB// "GeomFromText(@Point)," +
+                                             "@msgidstr," +
+                                             "@msgtext," +
+                                             "@msgin_reply_to_status_id," +
+                                             "@msgin_reply_to_user_id," +
+                                             "@msgin_reply_to_screen_name," +
+                                             "@msgfavorited," +
+                                             "@userscreen_name," +
+                                             "@userprovince," +
+                                             "@usercity," +
+                                             "@userlocation," +
+                                             "@userfollowers_count," +
+                                             "@userfriends_count," +
+                                             "@userstatuses_count," +
+                                             "@userfavourites_count," +
+                                             "@usercreated_at," +
+                                             "1," +
+                                             "@userverified," +
+                                             "@userbi_followers_count," +
+                                             "@userlang," +
+                                             "@userclient_mblogid" +
+                    //"@userdescription" +
+                                             " WHERE NOT EXISTS ( SELECT msgId from dbo.Harvest_Backup WHERE msgId = @msgId)";
+
+                
+                using (var cmd = new SqlCommand(insertCommand, conn))
+                {
+                    foreach (var result in s["statuses"])
+                    {
+                        var geoEnabled = (string)result["user"]["geo_enabled"];
+                        if (String.Equals(geoEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
+                        {
+                            //cmd.Parameters.Add("@id", System.Data.SqlDbType.Int).Value = 4;
+                            cmd.Parameters.Add("@SID", System.Data.SqlDbType.Int).Value = sid;
+                            cmd.Parameters.Add("@FID", System.Data.SqlDbType.Int).Value = fid;
+                            cmd.Parameters.Add("@FGID", System.Data.SqlDbType.Int).Value = fgid;
+
+                            var createdAt = (string)result["created_at"];
+                            DateTime myDate = DateTime.ParseExact(createdAt.Substring(4), "MMM dd HH:mm:ss zzzzz yyyy",
+                                System.Globalization.CultureInfo.InvariantCulture);
+                            //myDate.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                            cmd.Parameters.Add("@createdAT", System.Data.SqlDbType.DateTime).Value =
+                                myDate.ToUniversalTime();
+
+
+                            cmd.Parameters.Add("@msgid", System.Data.SqlDbType.BigInt).Value =
+                                long.Parse(Convert.ToString(result["id"]));
+                            //Console.WriteLine(result["id"]);
+
+
+                            cmd.Parameters.Add("@msgmid", System.Data.SqlDbType.BigInt).Value =
+                                long.Parse(Convert.ToString(result["mid"]));
+
+
+                            cmd.Parameters.Add("@geoTYPE", System.Data.SqlDbType.VarChar).Value = Convert.ToString(result["geo"]["type"]);
+                            cmd.Parameters.Add("@geoLAT", System.Data.SqlDbType.Float).Value = double.Parse(Convert.ToString(result["geo"]["coordinates"][0]));
+                            cmd.Parameters.Add("@geoLOG", System.Data.SqlDbType.Float).Value = double.Parse(Convert.ToString(result["geo"]["coordinates"][1]));
+
+                            //cmd.Parameters.AddWithValue("@usergeo_enabled", 1);
+
+                            cmd.Parameters.Add("@userID", System.Data.SqlDbType.BigInt).Value = long.Parse(Convert.ToString(result["user"]["id"]));
+                            cmd.Parameters.Add("@distance", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["distance"]));
+                            cmd.Parameters.Add("@msgidstr", System.Data.SqlDbType.BigInt).Value = long.Parse(Convert.ToString(result["idstr"]));
+                            cmd.Parameters.Add("@msgtext", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["text"]);
+
+                            string inReplyToStatusId = Convert.ToString(result["in_reply_to_status_id"]);
+                            if (inReplyToStatusId.Any())
+                            {
+                                cmd.Parameters.Add("@msgin_reply_to_status_id", System.Data.SqlDbType.BigInt).Value = long.Parse(inReplyToStatusId);
+                            }
+                            else
+                            {
+                                cmd.Parameters.Add("@msgin_reply_to_status_id", System.Data.SqlDbType.BigInt).Value =
+                                    DBNull.Value;
+                            }
+
+                            string inReplyToUserId = Convert.ToString(result["in_reply_to_user_id"]);
+
+                            if (inReplyToUserId != null && inReplyToUserId.Any())
+                            {
+                                cmd.Parameters.Add("@msgin_reply_to_user_id", System.Data.SqlDbType.BigInt).Value = long.Parse(inReplyToUserId);
+                            }
+                            else
+                            {
+                                cmd.Parameters.Add("@msgin_reply_to_user_id", System.Data.SqlDbType.BigInt).Value =
+                                    DBNull.Value;
+                            }
+
+                            cmd.Parameters.Add("@msgin_reply_to_screen_name", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["in_reply_to_screen_name"]);
+
+                            string msgfavorited = Convert.ToString(result["favorited"]);
+                            cmd.Parameters.Add("@msgfavorited", System.Data.SqlDbType.Int).Value = msgfavorited.ToLower() == "true" ? 1 : 0;
+
+
+                            cmd.Parameters.Add("@userscreen_name", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["user"]["screen_name"]);
+
+                            cmd.Parameters.Add("@userprovince", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["province"]));
+
+                            cmd.Parameters.Add("@usercity", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["city"]));
+                            cmd.Parameters.Add("@userlocation", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["user"]["location"]);
+
+                            cmd.Parameters.Add("@userfollowers_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["followers_count"]));
+                            cmd.Parameters.Add("@userfriends_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["friends_count"]));
+                            cmd.Parameters.Add("@userstatuses_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["statuses_count"]));
+                            cmd.Parameters.Add("@userfavourites_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["favourites_count"]));
+
+
+                            string usercreatedAt = result["user"]["created_at"];
+                            myDate = DateTime.ParseExact(usercreatedAt.Substring(4), "MMM dd HH:mm:ss zzzzz yyyy",
+                                System.Globalization.CultureInfo.InvariantCulture);
+
+                            cmd.Parameters.Add("@usercreated_at", System.Data.SqlDbType.DateTime).Value =
+                                myDate.ToUniversalTime();
+
+                            string verified = Convert.ToString(result["user"]["verified"]);
+                            cmd.Parameters.Add("@userverified", System.Data.SqlDbType.Int).Value = verified.ToLower() == "true" ? 1 : 0;
+
+                            string userbiFollowersCount = Convert.ToString(result["user"]["bi_followers_count"]);
+                            if (userbiFollowersCount.Any())
+                            {
+                                cmd.Parameters.Add("@userbi_followers_count", System.Data.SqlDbType.Int).Value =
+                                    int.Parse(userbiFollowersCount);
+                            }
+                            else
+                            {
+                                cmd.Parameters.Add("@userbi_followers_count", System.Data.SqlDbType.Int).Value = DBNull.Value;
+                            }
+
+                            cmd.Parameters.Add("@userlang", System.Data.SqlDbType.VarChar).Value = Convert.ToString(result["user"]["lang"]);
+
+                            string mblogid = Convert.ToString(result["user"]["client_mblogid"]);
+                            if (mblogid != null && mblogid.Any())
+                            {
+                                cmd.Parameters.Add("@userclient_mblogid", System.Data.SqlDbType.NVarChar).Value = mblogid;
+                            }
+                            else
+                            {
+                                cmd.Parameters.Add("@userclient_mblogid", System.Data.SqlDbType.NVarChar).Value =
+                                    DBNull.Value;
+                            }
+                            ////cmd.Parameters.AddWithValue("@userdescription", result["user"]["description"]);
+
+                            written += cmd.ExecuteNonQuery();
+                            cmd.Parameters.Clear();
+                        }
+
+                    }
+                }
+            }
+               
+            var aaaa = new Tuple<int, int, int>(answer, c, wentin);
+            return aaaa;
+        }
+    }
+
+
     class WeiboMySQL
     {
 
@@ -1739,6 +2126,7 @@ namespace HarvesterChina
 
     }
 
+    //Different Lists
     //Tuple from MySQL DB
     public class FieldCoordinates<T1, T2, T3, T4> : List<Tuple<T1, T2, T3, T4>>
     {
@@ -1755,7 +2143,6 @@ namespace HarvesterChina
             Add(new Tuple<T1, T2, T3, T4, T5>(item, item2, item3, item4, item5));
         }
     }
-
     //Tuple from MSSQL DB
     public class Chexagons<T1, T2, T3, T4, T5, T6, T7> : List<Tuple<T1, T2, T3, T4, T5, T6, T7>>
     {
