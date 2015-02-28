@@ -19,7 +19,7 @@ using Npgsql;
 using System.Net;
 using System.Linq;
 
-//test
+// Local Branch
 
 namespace HarvesterChina
 {
@@ -1079,7 +1079,6 @@ Console.Write("written");
             return written;
         }
 
-
         public static string SearchPOIsByGeoToSQL(dynamic S)
         {
 
@@ -1284,7 +1283,6 @@ Console.Write("written");
 
 
         }
-
     }
 
     class SQLServer {
@@ -1688,11 +1686,8 @@ Console.Write("written");
         }
     }
 
-
     class WeiboMySQL
     {
-
-
         static public AppKeysAndSecrets<int, string, string, string, string> GetHarvestersFromDB()
         {
             string query = "GetAppKeysAndSecrets";
@@ -2123,7 +2118,6 @@ Console.Write("written");
             }
 
         }
-
     }
 
     //Different Lists
