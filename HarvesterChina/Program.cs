@@ -41,7 +41,7 @@ namespace HarvesterChina
 
 
                 //Get hexagons
-                Chexagons<int, int, int, int, double, double, double> Chexagons = SQLServer.GetHexagonsFromSQL(h);
+                lists.Chexagons<int, int, int, int, double, double, double> Chexagons = SQLServer.GetHexagonsFromSQL(h);
                 int CountHexagons = Chexagons.Count();
 
                 ////Output on console
@@ -81,7 +81,7 @@ namespace HarvesterChina
 
 
                 //Get Harvester AppKeys
-                AppKeysAndSecrets<int, string, string, string, string> AppKeysAndSecretsList = SQLServer.GetAppKeysFromSQL();
+                lists.AppKeysAndSecrets<int, string, string, string, string> AppKeysAndSecretsList = SQLServer.GetAppKeysFromSQL();
 
                 //Number of Harvesters is the number of AppKeys
                 int numHarvesters = AppKeysAndSecretsList.Count();
@@ -1286,11 +1286,11 @@ Console.Write("written");
     }
 
     class SQLServer {
-        static public Chexagons<int, int, int, int, double, double, double> GetHexagonsFromSQL(int p)
+        static public lists.Chexagons<int, int, int, int, double, double, double> GetHexagonsFromSQL(int p)
         {
 
             //LIST
-            var HexagonList = new Chexagons<int, int, int, int, double, double, double> { };
+            var HexagonList = new lists.Chexagons<int, int, int, int, double, double, double> { };
 
             //CONNECT
             SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
@@ -1339,7 +1339,7 @@ Console.Write("written");
             return HexagonList;
         }
 
-        static public void SetHexagonsAsTakenSQL(Chexagons<int, int, int, int, double, double, double> L)
+        static public void SetHexagonsAsTakenSQL(lists.Chexagons<int, int, int, int, double, double, double> L)
         {
 
 
@@ -1381,10 +1381,10 @@ Console.Write("written");
 
         }
 
-        static public AppKeysAndSecrets<int, string, string, string, string> GetAppKeysFromSQL()
+        static public lists.AppKeysAndSecrets<int, string, string, string, string> GetAppKeysFromSQL()
         {
             //LIST
-            var HarvesterList = new AppKeysAndSecrets<int, string, string, string, string> { };
+            var HarvesterList = new lists.AppKeysAndSecrets<int, string, string, string, string> { };
             
             //CONNECT
             SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
@@ -1427,7 +1427,7 @@ Console.Write("written");
 
         }
 
-        static public void SetAppKeysAsTakenSQL(AppKeysAndSecrets<int, string, string, string, string> A)
+        static public void SetAppKeysAsTakenSQL(lists.AppKeysAndSecrets<int, string, string, string, string> A)
         {
             //CONNECT
             SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
@@ -1471,8 +1471,8 @@ Console.Write("written");
 
         static public Tuple<int, int, int> NearbyTimelineToSQL(dynamic s, string sid, string fid, int fgid)
         {
-
-            int answer = 0;
+            Console.WriteLine("You are here.");
+            int counts = 0;
             int wentin = 0;
             int c = 0;
 
@@ -1560,6 +1560,7 @@ Console.Write("written");
                 {
                     foreach (var result in s["statuses"])
                     {
+                        counts = counts + 1;
                         var geoEnabled = (string)result["user"]["geo_enabled"];
                         if (String.Equals(geoEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
                         {
@@ -1681,7 +1682,7 @@ Console.Write("written");
                 }
             }
                
-            var aaaa = new Tuple<int, int, int>(answer, c, wentin);
+            var aaaa = new Tuple<int, int, int>(counts, c, written);
             return aaaa;
         }
     }
@@ -2120,7 +2121,9 @@ Console.Write("written");
         }
     }
 
+
     //Different Lists
+    class lists { 
     //Tuple from MySQL DB
     public class FieldCoordinates<T1, T2, T3, T4> : List<Tuple<T1, T2, T3, T4>>
     {
@@ -2129,6 +2132,7 @@ Console.Write("written");
             Add(new Tuple<T1, T2, T3, T4>(item, item2, item3, item4));
         }
     }
+
     //Tuple from MySQL DB
     public class AppKeysAndSecrets<T1, T2, T3, T4, T5> : List<Tuple<T1, T2, T3, T4, T5>>
     {
@@ -2146,7 +2150,7 @@ Console.Write("written");
         }
     }
 
-
+}
 
 
 
