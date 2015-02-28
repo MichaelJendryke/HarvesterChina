@@ -19,7 +19,7 @@ using Npgsql;
 using System.Net;
 using System.Linq;
 
-// Local Branch hihi
+// Local Branch Michael Jendryke 2015-02-28
 
 namespace HarvesterChina
 {
