@@ -20,6 +20,7 @@ using System.Net;
 using System.Linq;
 using System.Transactions;
 using System.Dynamic;
+using Microsoft.SqlServer;
 
 
 // Local Branch Michael Jendryke 2015-03-02 7:17
@@ -40,7 +41,7 @@ namespace HarvesterChina
                 //VARIABLES
                 int h = 2477; //number of hexagons for this harvester
                 int updateroundstoMSSQL = 50;   //number of rounds until update to MSSQL
-                int past = 4;    //number of full month to go back in time (start)
+                int past = 1;    //priority for last month
 
 
                 //Get hexagons
@@ -174,27 +175,7 @@ namespace HarvesterChina
                         updaterounds = 0;
                     }
 
-                    //Start and end time
-                    DateTime start = new DateTime(2013, 12, 30, 0, 0, 0);
-                    //DateTime end = new DateTime(2015, 1, 1, 23, 0, 0);
-                    DateTime end = DateTime.Now;
-                    start = end.AddMonths(-past);
-                    start = start.AddDays(-end.Day);
-                    start = start.AddHours(-end.Hour);
-                    start = start.AddMinutes(-end.Minute);
-                    start = start.AddSeconds(-end.Second);
-
-                    //Console.WriteLine(start);
-                    //Console.WriteLine(end);
-                    //Console.WriteLine((int)DateTimeToUnixTimestamp(start));
-                    //Console.WriteLine((int)DateTimeToUnixTimestamp(end));
-
-
-
-
-
-
-
+                    
                     // LOOP THROUGH all Harvesters
                     for (int currentHarvester = 0; currentHarvester < numHarvesters; currentHarvester++)
                     {
@@ -218,14 +199,49 @@ namespace HarvesterChina
                         }
 
 
+                        
+                        DateTime start = new DateTime(2014, 9, 30, 0, 0, 0);
+                        DateTime end = DateTime.Now;
                         //Make random time
                         Random gen = new Random();
-                        //DateTime t = start.AddMinutes(gen.Next(range));
+                        int thrid = 0;
+                        thrid = gen.Next(0, 3);
 
+                        //Different probabilities to pick timeframe
+                        switch (thrid)
+                        {
+                            case 0:
+                                start = end.AddMonths(-past);
+                                Console.Write("\n" + "* ");
+                                break;
+                            case 1:
+                                Console.Write("\n" + "  ");
+                                break;
+                            case 2:
+                                Console.Write("\n" + "  ");
+                                break;
+                            default:
+                                Console.WriteLine("Error");
+                                break;
+                        }
 
+                        ////Start and end time
+                        //DateTime start = new DateTime(2013, 12, 30, 0, 0, 0);
+                        ////DateTime end = new DateTime(2015, 1, 1, 23, 0, 0);
+                        
+                        //start = end.AddMonths(-past);
+                        //start = start.AddDays(-end.Day);
+                        //start = start.AddHours(-end.Hour);
+                        //start = start.AddMinutes(-end.Minute);
+                        //start = start.AddSeconds(-end.Second);
+
+                        //Console.WriteLine(start);
+                        //Console.WriteLine(end);
+                        //Console.WriteLine((int)DateTimeToUnixTimestamp(start));
+                        //Console.WriteLine((int)DateTimeToUnixTimestamp(end));
 
                         int eT = rnd.Next((int)DateTimeToUnixTimestamp(start), (int)DateTimeToUnixTimestamp(end));
-                        Console.Write("\n" + (currentHarvester + 1) + "\t" + UNIXtimeTOreadable(eT).ToString("yyyy/MM/dd HH:mm:ss") +
+                        Console.Write((currentHarvester + 1) + "\t" + UNIXtimeTOreadable(eT).ToString("yyyy/MM/dd HH:mm:ss") +
                             " AppKEY: " + String.Format("{0,12:###}", AppKeysAndSecretsList[currentHarvester].Item2));
 
                         //Get Authorization
@@ -353,7 +369,7 @@ namespace HarvesterChina
 
                             if (statusescount > 0)
                             {
-                                var r = SQLServer.NearbyTimelineToSQL(dNTL,
+                                var r = SQLServer.NearbyTimelineToSQLpTrans(dNTL,
                                                       "8",
                                                       Chexagons[Chidx].Item1.ToString(),
                                                       8);
@@ -1742,17 +1758,14 @@ namespace HarvesterChina
             return res;
         }
 
-        static public Tuple<int, int> NearbyTimelineToSQLnonparam(dynamic s, string sid, string fid, int fgid)
+        static public Tuple<int, int> NearbyTimelineToSQLpTrans(dynamic s, string sid, string fid, int fgid)
         {
 
             int counts = 0;
             int written = 0;
-          
-            //CONNECT
-            
 
-
-            string insertCommand = "INSERT INTO [weibo].[dbo].[NBT] (" +
+            //InsertCommand
+            const string insertCommand = "INSERT INTO [weibo].[dbo].[NBT2] (" +
                                          "SeasonID," +
                                          "FieldID," +
                                          "FieldGroupID," +
@@ -1784,102 +1797,238 @@ namespace HarvesterChina
                                          "userverified," +
                                          "userbi_followers_count," +
                                          "userlang," +
-                                         "userclient_mblogid" +
+                                         "userclient_mblogid," +
+                                         "WGSLatitudeX," +
+                                         "WGSLongitudeY," +
+                                         "location" +
                 //"userdescription" +
                                          ")" +
 
                                          " values " +
-                                         "(";
-
+                                         "(" +
+                                         "@SID," +
+                                         "@FID," +
+                                         "@FGID," +
+                                         "@createdAT," +
+                                         "@msgid," +
+                                         "@msgmid," +
+                                         "@geoTYPE," +
+                                         "@geoLAT," +
+                                         "@geoLOG," +
+                                         "@userID," +
+                                         "@distance," +
+                //InnoDB// "GeomFromText(@Point)," +
+                                         "@msgidstr," +
+                                         "@msgtext," +
+                                         "@msgin_reply_to_status_id," +
+                                         "@msgin_reply_to_user_id," +
+                                         "@msgin_reply_to_screen_name," +
+                                         "@msgfavorited," +
+                                         "@userscreen_name," +
+                                         "@userprovince," +
+                                         "@usercity," +
+                                         "@userlocation," +
+                                         "@userfollowers_count," +
+                                         "@userfriends_count," +
+                                         "@userstatuses_count," +
+                                         "@userfavourites_count," +
+                                         "@usercreated_at," +
+                                         "1," +
+                                         "@userverified," +
+                                         "@userbi_followers_count," +
+                                         "@userlang," +
+                                         "@userclient_mblogid," +
+                                         "@WGSLatitudeX," +
+                                         "@WGSLongitudeY," +
+                                         "geography::STGeomFromText(@location,4326)" +
+                //"@userdescription" +
+                                         ")";
             try
             {
-
-                foreach (var result in s["statuses"])
+                using (var tsc = new TransactionScope()) //Not sure if it is implemented properly!
                 {
-                    counts = counts + 1;
-                    insertCommand = insertCommand + sid.ToString() + ", ";
-                    insertCommand = insertCommand + fid.ToString() + ", ";
-                    insertCommand = insertCommand + fgid.ToString() + ", ";
-                    insertCommand = insertCommand + fgid.ToString() + ", ";
-                    var createdAt = (string)result["created_at"];
-                    DateTime myDate = DateTime.ParseExact(createdAt.Substring(4), "MMM dd HH:mm:ss zzzzz yyyy",
-                        System.Globalization.CultureInfo.InvariantCulture);
-                    insertCommand = insertCommand + myDate.ToUniversalTime().ToString() + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["id"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["mid"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["geo"]["type"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["geo"]["coordinates"][0]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["geo"]["coordinates"][1]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["id"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["distance"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["idstr"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["text"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["in_reply_to_status_id"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["in_reply_to_user_id"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["in_reply_to_screen_name"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["favorited"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["screen_name"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["province"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["city"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["location"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["followers_count"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["friends_count"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["statuses_count"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["favourites_count"]) + ", ";
-                    string usercreatedAt = result["user"]["created_at"];
-                    myDate = DateTime.ParseExact(usercreatedAt.Substring(4), "MMM dd HH:mm:ss zzzzz yyyy",
-                        System.Globalization.CultureInfo.InvariantCulture);
-                    insertCommand = insertCommand + myDate.ToUniversalTime();
-                    insertCommand = insertCommand + myDate.ToUniversalTime().ToString() + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["verified"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["bi_followers_count"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["lang"]) + ", ";
-                    insertCommand = insertCommand + Convert.ToString(result["user"]["client_mblogid"]) + ", ";
-                    insertCommand = insertCommand.Substring(0, insertCommand.Length - 2);
-                    insertCommand = insertCommand + "; ";
-                }
+                    //Console.WriteLine("In TransacrtionScope");
+                    using (var conn1 = new SqlConnection(Properties.Settings.Default.MSSQL))
+                    {
+                        conn1.Open();
+                        const string PointMask = "POINT ({0} {1})";
 
 
+                        //Console.Write(" conn1 Open ");
+                        //Console.WriteLine(s);
+                        foreach (var result in s["statuses"])
+                        {
+                            SqlCommand cmd = new SqlCommand(insertCommand, conn1);
+                            counts = counts + 1;
+                            //Console.WriteLine("Status nr. " + counts.ToString());
+                            var geoEnabled = (string)result["user"]["geo_enabled"];
+                            if (String.Equals(geoEnabled, "true", StringComparison.InvariantCultureIgnoreCase))
+                            {
+                                //cmd.Parameters.Add
+                                cmd.Parameters.Add("@SID", System.Data.SqlDbType.Int).Value = sid;
+                                cmd.Parameters.Add("@FID", System.Data.SqlDbType.Int).Value = fid;
+                                cmd.Parameters.Add("@FGID", System.Data.SqlDbType.Int).Value = fgid;
 
-                insertCommand = insertCommand.Substring(0, insertCommand.Length - 2);
-                insertCommand = insertCommand + ");";
+                                var createdAt = (string)result["created_at"];
+                                DateTime myDate = DateTime.ParseExact(createdAt.Substring(4), "MMM dd HH:mm:ss zzzzz yyyy",
+                                    System.Globalization.CultureInfo.InvariantCulture);
+                                //myDate.ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss");
+                                cmd.Parameters.Add("@createdAT", System.Data.SqlDbType.DateTime).Value =
+                                    myDate.ToUniversalTime();
 
+
+                                cmd.Parameters.Add("@msgid", System.Data.SqlDbType.BigInt).Value =
+                                    long.Parse(Convert.ToString(result["id"]));
+                                //Console.WriteLine(result["id"]);
+
+
+                                cmd.Parameters.Add("@msgmid", System.Data.SqlDbType.BigInt).Value =
+                                    long.Parse(Convert.ToString(result["mid"]));
+
+
+                                cmd.Parameters.Add("@geoTYPE", System.Data.SqlDbType.VarChar).Value = Convert.ToString(result["geo"]["type"]);
+                                cmd.Parameters.Add("@geoLAT", System.Data.SqlDbType.Float).Value = double.Parse(Convert.ToString(result["geo"]["coordinates"][0]));
+                                cmd.Parameters.Add("@geoLOG", System.Data.SqlDbType.Float).Value = double.Parse(Convert.ToString(result["geo"]["coordinates"][1]));
+
+                                //cmd.Parameters.AddWithValue("@usergeo_enabled", 1);
+
+                                cmd.Parameters.Add("@userID", System.Data.SqlDbType.BigInt).Value = long.Parse(Convert.ToString(result["user"]["id"]));
+                                cmd.Parameters.Add("@distance", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["distance"]));
+                                cmd.Parameters.Add("@msgidstr", System.Data.SqlDbType.BigInt).Value = long.Parse(Convert.ToString(result["idstr"]));
+                                cmd.Parameters.Add("@msgtext", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["text"]);
+
+                                string inReplyToStatusId = Convert.ToString(result["in_reply_to_status_id"]);
+                                if (inReplyToStatusId.Any())
+                                {
+                                    cmd.Parameters.Add("@msgin_reply_to_status_id", System.Data.SqlDbType.BigInt).Value = long.Parse(inReplyToStatusId);
+                                }
+                                else
+                                {
+                                    cmd.Parameters.Add("@msgin_reply_to_status_id", System.Data.SqlDbType.BigInt).Value =
+                                        DBNull.Value;
+                                }
+
+                                string inReplyToUserId = Convert.ToString(result["in_reply_to_user_id"]);
+
+                                if (inReplyToUserId != null && inReplyToUserId.Any())
+                                {
+                                    cmd.Parameters.Add("@msgin_reply_to_user_id", System.Data.SqlDbType.BigInt).Value = long.Parse(inReplyToUserId);
+                                }
+                                else
+                                {
+                                    cmd.Parameters.Add("@msgin_reply_to_user_id", System.Data.SqlDbType.BigInt).Value =
+                                        DBNull.Value;
+                                }
+
+                                cmd.Parameters.Add("@msgin_reply_to_screen_name", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["in_reply_to_screen_name"]);
+
+                                string msgfavorited = Convert.ToString(result["favorited"]);
+                                cmd.Parameters.Add("@msgfavorited", System.Data.SqlDbType.Int).Value = msgfavorited.ToLower() == "true" ? 1 : 0;
+
+
+                                cmd.Parameters.Add("@userscreen_name", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["user"]["screen_name"]);
+
+                                cmd.Parameters.Add("@userprovince", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["province"]));
+
+                                cmd.Parameters.Add("@usercity", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["city"]));
+                                cmd.Parameters.Add("@userlocation", System.Data.SqlDbType.NVarChar).Value = Convert.ToString(result["user"]["location"]);
+
+                                cmd.Parameters.Add("@userfollowers_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["followers_count"]));
+                                cmd.Parameters.Add("@userfriends_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["friends_count"]));
+                                cmd.Parameters.Add("@userstatuses_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["statuses_count"]));
+                                cmd.Parameters.Add("@userfavourites_count", System.Data.SqlDbType.Int).Value = int.Parse(Convert.ToString(result["user"]["favourites_count"]));
+
+
+                                string usercreatedAt = result["user"]["created_at"];
+                                myDate = DateTime.ParseExact(usercreatedAt.Substring(4), "MMM dd HH:mm:ss zzzzz yyyy",
+                                    System.Globalization.CultureInfo.InvariantCulture);
+
+                                cmd.Parameters.Add("@usercreated_at", System.Data.SqlDbType.DateTime).Value =
+                                    myDate.ToUniversalTime();
+
+                                string verified = Convert.ToString(result["user"]["verified"]);
+                                cmd.Parameters.Add("@userverified", System.Data.SqlDbType.Int).Value = verified.ToLower() == "true" ? 1 : 0;
+
+                                string userbiFollowersCount = Convert.ToString(result["user"]["bi_followers_count"]);
+                                if (userbiFollowersCount.Any())
+                                {
+                                    cmd.Parameters.Add("@userbi_followers_count", System.Data.SqlDbType.Int).Value =
+                                        int.Parse(userbiFollowersCount);
+                                }
+                                else
+                                {
+                                    cmd.Parameters.Add("@userbi_followers_count", System.Data.SqlDbType.Int).Value = DBNull.Value;
+                                }
+
+                                cmd.Parameters.Add("@userlang", System.Data.SqlDbType.VarChar).Value = Convert.ToString(result["user"]["lang"]);
+
+                                string mblogid = Convert.ToString(result["user"]["client_mblogid"]);
+                                if (mblogid != null && mblogid.Any())
+                                {
+                                    cmd.Parameters.Add("@userclient_mblogid", System.Data.SqlDbType.NVarChar).Value = mblogid;
+                                }
+                                else
+                                {
+                                    cmd.Parameters.Add("@userclient_mblogid", System.Data.SqlDbType.NVarChar).Value =
+                                        DBNull.Value;
+                                }
+                                ////cmd.Parameters.AddWithValue("@userdescription", result["user"]["description"]);
+
+                                EvilTransform.Transform transformer = new EvilTransform.Transform();
+                                EvilTransform.PointLatLng WGSpoint = new EvilTransform.PointLatLng();
+                                double badLat = double.Parse(Convert.ToString(result["geo"]["coordinates"][0]));
+                                double badLog = double.Parse(Convert.ToString(result["geo"]["coordinates"][1]));
+                                WGSpoint = transformer.GCJ2WGSExact(badLat, badLog);
+                                //int epsg = 4326;
+                                //var point = Microsoft.SqlServer.Types.SqlGeography.Point(WGSpoint.Lat, WGSpoint.Lng, epsg); //srid not EPSG here
+
+                                cmd.Parameters.Add("@WGSLatitudeX", System.Data.SqlDbType.Float).Value = double.Parse(Convert.ToString(WGSpoint.Lat));
+                                cmd.Parameters.Add("@WGSLongitudeY", System.Data.SqlDbType.Float).Value = double.Parse(Convert.ToString(WGSpoint.Lng));
+                                
+                                string location = string.Format(PointMask, WGSpoint.Lng, WGSpoint.Lat);
+                                //Console.WriteLine(location);
+                                cmd.Parameters.Add("@location", System.Data.SqlDbType.NVarChar).Value = location;
+                                
+
+
+                            }//If geoenabled
+                            //Console.Write(counts.ToString());
+                            try
+                            {
+                                //SQL throws a VIOLATION not the number of rows affected (not so nice)
+                                written += cmd.ExecuteNonQuery();
+
+                            }
+                            catch (Exception ex)
+                            {
+                                //Console.WriteLine(ex);
+                            }
+
+                        }//For each Loop
+                        if (written >= 1 && written <= 50)
+                        {
+                            //good
+                        }
+                        else
+                        {
+                            written = 0;
+                        }
+                        //Console.Write("written: " + written.ToString());
+                        //cmd.Parameters.Clear();
+                        //conn1.Close();
+                    }//SQL connection
+                    tsc.Complete();
+
+                }//TransactionScope
             }
-            catch (Exception e)
+            catch (TransactionAbortedException ex)
             {
-                Console.WriteLine(e.ToString());
+                Console.WriteLine("TransactionAbortedException Message: {0}", ex.Message);
             }
-
-            Console.Write("HERE");
-
-            Console.WriteLine("/n/n/n" + insertCommand + "/n/n/n/n");
-
-            
-
-
-
-            SqlConnection myConnection = new SqlConnection(Properties.Settings.Default.MSSQL);
-            try
+            catch (ApplicationException ex)
             {
-                myConnection.Open();
+                Console.WriteLine("ApplicationException Message: {0}", ex.Message);
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-var cmd = new SqlCommand(insertCommand, myConnection);
-
-            try
-            {
-                written = cmd.ExecuteNonQuery();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-            cmd.Parameters.Clear();
-
-
             var res = new Tuple<int, int>(counts, written);
             return res;
         }
@@ -2319,7 +2468,6 @@ var cmd = new SqlCommand(insertCommand, myConnection);
         }
     }
 
-
     //Different Lists
     class lists
     {
@@ -2351,6 +2499,150 @@ var cmd = new SqlCommand(insertCommand, myConnection);
 
     }
 
+    namespace EvilTransform
+    {
+        public struct PointLatLng
+        {
+            public double Lat;
+            public double Lng;
 
+            public PointLatLng(double lat, double lng)
+            {
+                this.Lat = lat;
+                this.Lng = lng;
+            }
+        }
+    
+        class Transform
+        {
+            bool OutOfChina(double lat, double lng)
+            {
+                if ((lng < 72.004) || (lng > 137.8347))
+                {
+                    return true;
+                }
+                if ((lat < 0.8293) || (lat > 55.8271))
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            double TransformLat(double x, double y)
+            {
+                double ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.Sqrt(Math.Abs(x));
+                ret += (20.0 * Math.Sin(6.0 * x * Math.PI) + 20.0 * Math.Sin(2.0 * x * Math.PI)) * 2.0 / 3.0;
+                ret += (20.0 * Math.Sin(y * Math.PI) + 40.0 * Math.Sin(y / 3.0 * Math.PI)) * 2.0 / 3.0;
+                ret += (160.0 * Math.Sin(y / 12.0 * Math.PI) + 320 * Math.Sin(y * Math.PI / 30.0)) * 2.0 / 3.0;
+                return ret;
+            }
+
+            double TransformLon(double x, double y)
+            {
+                double ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.Sqrt(Math.Abs(x));
+                ret += (20.0 * Math.Sin(6.0 * x * Math.PI) + 20.0 * Math.Sin(2.0 * x * Math.PI)) * 2.0 / 3.0;
+                ret += (20.0 * Math.Sin(x * Math.PI) + 40.0 * Math.Sin(x / 3.0 * Math.PI)) * 2.0 / 3.0;
+                ret += (150 * Math.Sin(x / 12.0 * Math.PI) + 300.0 * Math.Sin(x / 30.0 * Math.PI)) * 2.0 / 3.0;
+                return ret;
+            }
+
+            PointLatLng Delta(double lat, double lng)
+            {
+                PointLatLng ret = new PointLatLng();
+                double a = 6378245.0;
+                double ee = 0.00669342162296594323;
+                double dLat = TransformLat(lng - 105.0, lat - 35.0);
+                double dLng = TransformLon(lng - 105.0, lat - 35.0);
+                double radLat = lat / 180.0 * Math.PI;
+                double magic = Math.Sin(radLat);
+                magic = 1 - ee * magic * magic;
+                double sqrtMagic = Math.Sqrt(magic);
+                dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * Math.PI);
+                dLng = (dLng * 180.0) / (a / sqrtMagic * Math.Cos(radLat) * Math.PI);
+                ret.Lat = dLat;
+                ret.Lng = dLng;
+                return ret;
+            }
+
+            public PointLatLng WGS2GCJ(double wgsLat, double wgsLng)
+            {
+                if (OutOfChina(wgsLat, wgsLng))
+                {
+                    return new PointLatLng(wgsLat, wgsLng);
+                }
+                PointLatLng d = Delta(wgsLat, wgsLng);
+                return new PointLatLng(wgsLat + d.Lat, wgsLng + d.Lng);
+            }
+
+            public PointLatLng GCJ2WGS(double gcjLat, double gcjLng)
+            {
+                if (OutOfChina(gcjLat, gcjLng))
+                {
+                    return new PointLatLng(gcjLat, gcjLng);
+                }
+                PointLatLng d = Delta(gcjLat, gcjLng);
+                return new PointLatLng(gcjLat - d.Lat, gcjLng - d.Lng);
+            }
+
+            public PointLatLng GCJ2WGSExact(double gcjLat, double gcjLng)
+            {
+                double initDelta = 0.01;
+                double threshold = 0.000001;
+                double dLat = initDelta;
+                double dLng = initDelta;
+                double mLat = gcjLat - dLat;
+                double mLng = gcjLng - dLng;
+                double pLat = gcjLat + dLat;
+                double pLng = gcjLng + dLng;
+                double wgsLat = 0;
+                double wgsLng = 0;
+
+                for (int i = 0; i < 30; i++)
+                {
+                    wgsLat = (mLat + pLat) / 2;
+                    wgsLng = (mLng + pLng) / 2;
+                    PointLatLng tmp = WGS2GCJ(wgsLat, wgsLng);
+                    dLat = tmp.Lat - gcjLat;
+                    dLng = tmp.Lng - gcjLng;
+                    if ((Math.Abs(dLat) < threshold) && (Math.Abs(dLng) < threshold))
+                    {
+                        return new PointLatLng(wgsLat, wgsLng);
+                    }
+                    if (dLat > 0)
+                    {
+                        pLat = wgsLat;
+                    }
+                    else
+                    {
+                        mLat = wgsLat;
+                    }
+                    if (dLng > 0)
+                    {
+                        pLng = wgsLng;
+                    }
+                    else
+                    {
+                        mLng = wgsLng;
+                    }
+                }
+                return new PointLatLng(wgsLat, wgsLng);
+            }
+
+            public double Distance(double latA, double lngA, double latB, double lngB)
+            {
+                double earthR = 6371000;
+                double x = Math.Cos(latA * Math.PI / 180) * Math.Cos(latB * Math.PI / 180) * Math.Cos((lngA - lngB) * Math.PI / 180);
+                double y = Math.Sin(latA * Math.PI / 180) * Math.Sin(latB * Math.PI / 180);
+                double s = x + y;
+                if (s > 1)
+                    s = 1;
+                if (s < -1)
+                    s = -1;
+                double alpha = Math.Acos(s);
+                var distance = alpha * earthR;
+                return distance;
+            }
+        }
+    }
 
 }
