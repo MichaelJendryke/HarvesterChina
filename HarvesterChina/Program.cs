@@ -40,6 +40,7 @@ namespace HarvesterChina
             {
                 //VARIABLES
                 int h = 2477; //number of hexagons for this harvester
+                h = Properties.Settings.Default.NbrOfFields;
                 int updateroundstoMSSQL = 50;   //number of rounds until update to MSSQL
                 int past = 1;    //priority for last month
 
@@ -201,6 +202,7 @@ namespace HarvesterChina
 
                         
                         DateTime start = new DateTime(2014, 9, 30, 0, 0, 0);
+                        start = Properties.Settings.Default.starttime;
                         DateTime end = DateTime.Now;
                         //Make random time
                         Random gen = new Random();
