@@ -72,7 +72,7 @@ namespace HarvesterChina.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("user id=username;password=password;server=localhost;Trusted_Connection=yes;databa" +
-            "se=Weibo; connection timeout=120")]
+            "se=weibo; connection timeout=120")]
         public string MSSQL {
             get {
                 return ((string)(this["MSSQL"]));
