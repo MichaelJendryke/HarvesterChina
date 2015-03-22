@@ -72,7 +72,7 @@ namespace HarvesterChina.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("user id=username;password=password;server=localhost;Trusted_Connection=yes;databa" +
-            "se=weibo; connection timeout=120")]
+            "se=Weibo; connection timeout=120")]
         public string MSSQL {
             get {
                 return ((string)(this["MSSQL"]));
@@ -91,6 +91,18 @@ namespace HarvesterChina.Properties {
             }
             set {
                 this["NbrOfFields"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("NBT2_transformed")]
+        public string SQLtable {
+            get {
+                return ((string)(this["SQLtable"]));
+            }
+            set {
+                this["SQLtable"] = value;
             }
         }
     }

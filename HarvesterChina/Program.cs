@@ -369,12 +369,14 @@ namespace HarvesterChina
                             }
 
 
+                            //send data to MSSQL table
                             if (statusescount > 0)
                             {
                                 var r = SQLServer.NearbyTimelineToSQLpTrans(dNTL,
                                                       "8",
                                                       Chexagons[Chidx].Item1.ToString(),
-                                                      8);
+                                                      8,
+                                                      Properties.Settings.Default.SQLtable);
                                 collected = r.Item1;
                                 inserted = r.Item2;
 
@@ -1760,14 +1762,14 @@ namespace HarvesterChina
             return res;
         }
 
-        static public Tuple<int, int> NearbyTimelineToSQLpTrans(dynamic s, string sid, string fid, int fgid)
+        static public Tuple<int, int> NearbyTimelineToSQLpTrans(dynamic s, string sid, string fid, int fgid, string table)
         {
 
             int counts = 0;
             int written = 0;
 
             //InsertCommand
-            const string insertCommand = "INSERT INTO [weibo].[dbo].[NBT2] (" +
+            const string insertCommand = "INSERT INTO [weibo].[dbo].["+ table +"] (" +
                                          "SeasonID," +
                                          "FieldID," +
                                          "FieldGroupID," +
