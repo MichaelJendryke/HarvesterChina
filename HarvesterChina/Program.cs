@@ -35,7 +35,7 @@ namespace HarvesterChina
             Console.WriteLine("Welcome");
 
             string logbook = "<--- Time the program starts";
-            toLOG(logbook);
+            //toLOG(logbook);
             do
             {
                 //VARIABLES
