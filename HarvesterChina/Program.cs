@@ -21,6 +21,7 @@ using System.Linq;
 using System.Transactions;
 using System.Dynamic;
 using Microsoft.SqlServer;
+//using System.Runtime.InteropServices;
 
 
 // Local Branch Michael Jendryke 2015-03-02 7:17
@@ -29,12 +30,22 @@ namespace HarvesterChina
 {
     class Program
     {
+        //[DllImport("kernel32.dll")]
+        //static extern bool SetConsoleOutputCP(uint wCodePageID);
+   
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Welcome");
+            //Console.OutputEncoding = System.Text.Encoding.Unicode;
+            //System.Console.WriteLine(Console.OutputEncoding);
+            //SetConsoleOutputCP(65001);
+            //Console.OutputEncoding = Encoding.UTF8;
+            //Console.WriteLine("你好 tést, тест, τεστ, ←↑→↓∏∑√∞①②③④, Bài viết chọn lọc 你好 コントロール");
+            //Console.ReadLine();
+            System.Console.WriteLine("你好 Welcome");
+            
 
-            string logbook = "<--- Time the program starts";
+            //string logbook = "<--- Time the program starts";
             //toLOG(logbook);
             do
             {
@@ -301,25 +312,14 @@ namespace HarvesterChina
 
                             Console.Write(" LAT: " + String.Format("{0,7:###.000}", LAT) + " and LON: " + String.Format("{0,7:###.000}", LON) + " F:" + String.Format("{0,6:###}", Chexagons[Chidx].Item1));
 
-                            //Request to SINA
-                            try
-                            {
-                                Console.Write(" get");
-                                NTL = Sina.GetCommand("https://api.weibo.com/2/place/nearby_timeline.json",
-                                       new WeiboParameter("lat", LAT),
-                                       new WeiboParameter("long", LON),
-                                       new WeiboParameter("range", rng),// maximum radius is 11132m
-                                    // new WeiboParameter("starttime", sT),
-                                       new WeiboParameter("endtime", eT),
-                                    //new WeiboParameter("sort", false),
-                                       new WeiboParameter("count", cnt)//50 is the limit
-                                    //new WeiboParameter("page", 1),
-                                    //new WeiboParameter("base_app", false),
-                                    //new WeiboParameter("offset", false)
-                                       );
-                                Console.Write("NBT");
-
-
+                            try {
+                                //dynamic rrlimit = Sina.GetCommand("https://api.weibo.com/2/account/rate_limit_status.json");
+                                //Console.Write(rrlimit.ToString() );
+                                //Console.WriteLine(Sina.API.Entity.Account.RateLimitStatus() );
+                                
+                                //Console.WriteLine(Sina.API.Dynamic.Account.RateLimitStatus() );
+                               
+                                
                             }
                             catch (Exception ex)
                             {
@@ -328,6 +328,49 @@ namespace HarvesterChina
 
                                 continue; // is much better than break
                             }
+                            
+                            //Request to SINA
+                            try
+                            {
+                                Console.Write(" get");
+                                //Console.WriteLine("");
+                                //Console.WriteLine("");
+                                //Console.WriteLine("");
+                                //string get = "https://api.weibo.com/2/place/nearby_timeline.json?appkey=" + AppKeysAndSecretsList[currentHarvester].Item2 + "&access_token=" + Sina.OAuth.AccessToken;
+                                //Console.WriteLine(get);
+                                //Console.WriteLine("");
+                                //Console.WriteLine("");
+                                //Console.WriteLine("");
+                                //Console.ReadLine();
+                                NTL = Sina.GetCommand("https://api.weibo.com/2/place/nearby_timeline.json",
+                                       new WeiboParameter("lat", LAT),
+                                       new WeiboParameter("long", LON),
+                                       new WeiboParameter("range", rng),// maximum radius is 11132m
+                                    // new WeiboParameter("starttime", sT),
+                                       new WeiboParameter("endtime", eT),
+                                    // new WeiboParameter("sort", false),
+                                       new WeiboParameter("count", cnt)//50 is the limit
+                                    // new WeiboParameter("page", 1),
+                                    // new WeiboParameter("base_app", false),
+                                    // new WeiboParameter("offset", false)
+                                       );
+                                Console.Write("NBT");
+
+
+                            }
+                            catch (Exception ex)
+                            {
+                                //Console.Write(ex.ToString());
+                                
+                                Console.OutputEncoding = Encoding.Unicode;
+                                Console.WriteLine(ex.Message);
+                                toLOG(ex.ToString());
+
+                                continue; // is much better than break
+                            }
+                            
+                            
+
 
                             //Console.Write( Sina.API.Dynamic.Account.RateLimitStatus());
                             string AccessToken = Sina.OAuth.AccessToken.ToString();
@@ -457,7 +500,7 @@ namespace HarvesterChina
                     // Get the elapsed Stopwatch time as a TimeSpan value.
                     stopWatch.Stop();
                     TimeSpan ts = stopWatch.Elapsed;
-                    int maxNumOfRequests = 150;
+                    int maxNumOfRequests = Properties.Settings.Default.maxNumOfRequests;
                     int oneHourInMilliseconds = 3600000;
                     int FixRoundSeconds = (oneHourInMilliseconds / maxNumOfRequests) / 1000;
                     int roundTime = Convert.ToInt32(ts.TotalSeconds);

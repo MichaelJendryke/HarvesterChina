@@ -19,13 +19,16 @@
       <Value Profile="(Default)">2014-09-30</Value>
     </Setting>
     <Setting Name="MSSQL" Type="System.String" Scope="User">
-      <Value Profile="(Default)">user id=username;password=password;server=localhost;Trusted_Connection=yes;database=weibo; connection timeout=120</Value>
+      <Value Profile="(Default)">user id=username;password=password;server=Timo-Server;Trusted_Connection=yes;database=weibo; connection timeout=120</Value>
     </Setting>
     <Setting Name="NbrOfFields" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">2477</Value>
     </Setting>
     <Setting Name="SQLtable" Type="System.String" Scope="User">
       <Value Profile="(Default)">NBT2_transformed</Value>
+    </Setting>
+    <Setting Name="maxNumOfRequests" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">30</Value>
     </Setting>
   </Settings>
 </SettingsFile>

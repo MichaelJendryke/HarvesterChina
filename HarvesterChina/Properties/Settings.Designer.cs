@@ -71,8 +71,8 @@ namespace HarvesterChina.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("user id=username;password=password;server=localhost;Trusted_Connection=yes;databa" +
-            "se=weibo; connection timeout=120")]
+        [global::System.Configuration.DefaultSettingValueAttribute("user id=username;password=password;server=Timo-Server;Trusted_Connection=yes;data" +
+            "base=weibo; connection timeout=120")]
         public string MSSQL {
             get {
                 return ((string)(this["MSSQL"]));
@@ -103,6 +103,18 @@ namespace HarvesterChina.Properties {
             }
             set {
                 this["SQLtable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        public int maxNumOfRequests {
+            get {
+                return ((int)(this["maxNumOfRequests"]));
+            }
+            set {
+                this["maxNumOfRequests"] = value;
             }
         }
     }
