@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Data;
@@ -497,10 +498,22 @@ namespace HarvesterChina
 
 
                     }//END OF FOR LOOP AppKeys
+
+                    // create reader & open file
+                    var reader = new StreamReader("RequestsPerHour.txt");
+
+                    // read a line of text
+                    //Console.WriteLine(reader.ReadLine());
+                    int rrr = Convert.ToInt32(reader.ReadLine());
+                    //Console.WriteLine(rrr.ToString());
+                    // close the stream
+                    reader.Close();
+                    
+                    
                     // Get the elapsed Stopwatch time as a TimeSpan value.
                     stopWatch.Stop();
                     TimeSpan ts = stopWatch.Elapsed;
-                    int maxNumOfRequests = Properties.Settings.Default.maxNumOfRequests;
+                    int maxNumOfRequests = rrr;
                     int oneHourInMilliseconds = 3600000;
                     int FixRoundSeconds = (oneHourInMilliseconds / maxNumOfRequests) / 1000;
                     int roundTime = Convert.ToInt32(ts.TotalSeconds);
