@@ -261,7 +261,7 @@ namespace HarvesterChina
                         //Get Authorization
 
                         OAuth oauth = null;
-                        string accessToken = Properties.Settings.Default.AcessToken;
+                        //string accessToken = Properties.Settings.Default.AcessToken;
                         try
                         {
                             oauth = Authorize(AppKeysAndSecretsList[currentHarvester].Item2,
@@ -277,6 +277,8 @@ namespace HarvesterChina
                             continue; // is much better than break
                         }
 
+                                               
+
                         if (!string.IsNullOrEmpty(oauth.AccessToken))
                         {
                             Console.Write(" Access!");
@@ -289,7 +291,7 @@ namespace HarvesterChina
 
                         //Sina is your friend!
                         Client Sina = new Client(oauth);
-
+                       
                         //.Net4.0
                         try
                         {
@@ -334,15 +336,15 @@ namespace HarvesterChina
                             try
                             {
                                 Console.Write(" get");
-                                //Console.WriteLine("");
-                                //Console.WriteLine("");
-                                //Console.WriteLine("");
-                                //string get = "https://api.weibo.com/2/place/nearby_timeline.json?appkey=" + AppKeysAndSecretsList[currentHarvester].Item2 + "&access_token=" + Sina.OAuth.AccessToken;
-                                //Console.WriteLine(get);
-                                //Console.WriteLine("");
-                                //Console.WriteLine("");
-                                //Console.WriteLine("");
-                                //Console.ReadLine();
+                                Console.WriteLine("");
+                                Console.WriteLine("");
+                                Console.WriteLine("");
+                                string get = "https://api.weibo.com/2/place/nearby_timeline.json?appkey=" + AppKeysAndSecretsList[currentHarvester].Item2 + "&access_token=" + Sina.OAuth.AccessToken;
+                                Console.WriteLine(get);
+                                Console.WriteLine("");
+                                Console.WriteLine("");
+                                Console.WriteLine("");
+                                Console.ReadLine();
                                 NTL = Sina.GetCommand("https://api.weibo.com/2/place/nearby_timeline.json",
                                        new WeiboParameter("lat", LAT),
                                        new WeiboParameter("long", LON),
@@ -552,6 +554,7 @@ namespace HarvesterChina
             OAuth o = new OAuth(Key, Secret, Properties.Settings.Default.CallbackUrl);
             //string passport = "michael@jendryke.de";
             //string password = "12345678";
+            Console.WriteLine(o);
 
             while (!ClientLogin(o, pp, pw))	//使用模拟方法//调用ClientLogin函数
             {
